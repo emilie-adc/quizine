@@ -3,9 +3,7 @@ from collections.abc import AsyncGenerator
 
 from anthropic import AsyncAnthropic
 
-from app.core.config import settings
-
-client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+from app.core.config import get_settings
 
 _MCQ_SYSTEM = (
     "You are an expert certification exam question writer. "
@@ -21,6 +19,7 @@ async def stream_mcq(
     certification: str | None,
     n_questions: int,
 ) -> AsyncGenerator[str, None]:
+    client = AsyncAnthropic(api_key=get_settings().ANTHROPIC_API_KEY)
     cert_block = f"Certification context:\n{certification}\n\n" if certification else ""
     user_prompt = (
         f"{cert_block}"
