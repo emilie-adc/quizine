@@ -223,7 +223,7 @@ Work through in order. Tick and note when done. Do not skip ahead.
       `source_chunks`, `cards`, `mcq_options`, `card_schedule`, `card_reviews`,
       `exam_sessions`, `exam_answers`, `card_tags`.
 
-- [ ] **T12** — Alembic init + first migration. Verify `alembic upgrade head` runs in Docker.
+- [x] **T12** — Alembic init + first migration. Verify `alembic upgrade head` runs in Docker. ✅ 2026-04-08
 
 - [ ] **T13** — Seed script: `backend/seed_certifications.py` — upserts from
       `certifications.json` on startup. Hook into `main.py` lifespan.
