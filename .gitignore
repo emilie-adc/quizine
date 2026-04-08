@@ -205,3 +205,26 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+cat >> .gitignore << 'EOF'
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# Docker / uploads
+backend/uploads/*
+!backend/uploads/.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+EOF
+
+grep -qxF '.env' .gitignore || echo '.env' >> .gitignore
