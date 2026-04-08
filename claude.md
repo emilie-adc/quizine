@@ -191,7 +191,7 @@ Work through in order. Tick and note when done. Do not skip ahead.
       Output: `[{"front": "...", "back": "...", "topic_tag": "..."}]`.
       Request: `{text, certification, n_cards, topic_tags[], stream}`.
 
-- [ ] **T04** — Write `backend/tests/test_generate.py`. Mock Anthropic client.
+- [x] **T04** — Write `backend/tests/test_generate.py`. Mock Anthropic client. ✅ 2026-04-08
       Assert: correct response shape, exactly 1 correct MCQ answer, exactly 4 options.
 
 - [ ] **T05** — Create `backend/seed/certifications.json` with the 5 launch certs.
