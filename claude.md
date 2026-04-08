@@ -186,7 +186,7 @@ Work through in order. Tick and note when done. Do not skip ahead.
 - [x] **T02** — Fix `backend/app/main.py`: import `settings`, replace hardcoded CORS origin ✅ 2026-04-08
       with `settings.CORS_ORIGINS.split(",")`. Update app title to "Quizine".
 
-- [ ] **T03** — Add `POST /generate/flashcards` to `backend/app/api/generate.py`.
+- [x] **T03** — Add `POST /generate/flashcards` to `backend/app/api/generate.py`. ✅ 2026-04-08
       Same SSE streaming pattern as `/generate/mcq`.
       Output: `[{"front": "...", "back": "...", "topic_tag": "..."}]`.
       Request: `{text, certification, n_cards, topic_tags[], stream}`.
