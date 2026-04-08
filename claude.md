@@ -62,7 +62,7 @@ quizine/
 | `backend/app/api/generate.py` | ✅ done | MCQ endpoint with streaming SSE, cert-aware prompt |
 | `backend/app/main.py` | ✅ done | CORS origins read from settings |
 | `backend/Dockerfile` | ✅ done | |
-| `docker-compose.yml` | ✅ done | API + Postgres, hot-reload |
+| `docker-compose.yml` | ✅ done | API + Postgres development setup |
 | `backend/requirements.txt` | ✅ done | Pinned versions |
 | `backend/app/api/generate.py` flashcards route | ❌ missing | Phase 1 loose end — do this first |
 | `backend/app/core/config.py` | ✅ done | pydantic-settings, reads .env |
