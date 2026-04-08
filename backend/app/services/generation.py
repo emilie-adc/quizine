@@ -64,5 +64,12 @@ async def generate_mcq(
     )
     if not message.content:
         raise ValueError("Anthropic returned an empty response")
-    raw = message.content[0].text
-    return json.loads(raw)
+    raw = "".join(block.text for block in message.content if hasattr(block, "text"))
+    if not raw:
+        raise ValueError("Anthropic returned no text content")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"Anthropic returned invalid JSON: {exc}\nRaw response: {raw!r}"
+        ) from exc
