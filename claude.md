@@ -25,7 +25,7 @@ quizine/
 │   │   ├── core/
 │   │   │   └── config.py      ← pydantic-settings, reads .env
 │   │   ├── api/
-│   │   │   ├── generate.py    ← /generate/mcq, /generate/flashcards
+│   │   │   ├── generate.py    ← /generate/mcq
 │   │   │   ├── ingest.py
 │   │   │   ├── certifications.py  ← /certifications CRUD + seeding
 │   │   │   ├── decks.py
