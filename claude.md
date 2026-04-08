@@ -225,16 +225,16 @@ Work through in order. Tick and note when done. Do not skip ahead.
 
 - [x] **T12** — Alembic init + first migration. Verify `alembic upgrade head` runs in Docker. ✅ 2026-04-08
 
-- [ ] **T13** — Seed script: `backend/seed_certifications.py` — upserts from
-      `certifications.json` on startup. Hook into `main.py` lifespan.
+- [x] **T13** — Seed script: `backend/seed_certifications.py` — upserts from
+      `certifications.json` on startup. Hook into `main.py` lifespan. ✅ 2026-04-08
 
-- [ ] **T14** — `POST /decks`, `GET /decks`, `GET /decks/{id}`.
+- [x] **T14** — `POST /decks`, `GET /decks`, `GET /decks/{id}`.
       Deck creation accepts either `cert_id` (verified) or `custom_cert_name` (custom).
-      Wire generation to persist chunks + cards post-generation.
+      Wire generation to persist chunks + cards post-generation. ✅ 2026-04-08
 
-- [ ] **T15** — `PATCH /cards/{id}`, `DELETE /cards/{id}`, `POST /cards/{id}/approve`.
+- [x] **T15** — `PATCH /cards/{id}`, `DELETE /cards/{id}`, `POST /cards/{id}/approve`. ✅ 2026-04-08
 
-- [ ] **T16** — Frontend: deck list, deck detail, inline card editor.
+- [x] **T16** — Frontend: deck list, deck detail, inline card editor. ✅ 2026-04-08
 
 ### Phase 4 — ingestion
 
