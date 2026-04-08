@@ -219,7 +219,7 @@ Work through in order. Tick and note when done. Do not skip ahead.
 
 ### Phase 3 — persistence
 
-- [ ] **T11** — SQLAlchemy models: `certifications`, `cert_domains`, `decks`,
+- [x] **T11** — SQLAlchemy models: `certifications`, `cert_domains`, `decks`, ✅ 2026-04-08
       `source_chunks`, `cards`, `mcq_options`, `card_schedule`, `card_reviews`,
       `exam_sessions`, `exam_answers`, `card_tags`.
 
