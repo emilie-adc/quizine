@@ -114,11 +114,8 @@ Pass mark: 70%. Question style: scenario-based, practitioner level.
 ### Seed data
 `backend/seed/certifications.json` contains the initial verified cert catalogue.
 Launch set:
-- Databricks Data Engineer Associate
-- Databricks Data Engineer Professional
 - Databricks Machine Learning Associate
 - Databricks Machine Learning Professional
-- AWS Certified Data Engineer Associate
 
 Each entry includes `slug`, `display_name`, `provider`, `level`, `pass_score_pct`,
 `prompt_context`, and a `domains` array with `name`, `slug`, `weight_pct`, `description`.
