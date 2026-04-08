@@ -45,6 +45,20 @@ def test_settings_missing_required_field(monkeypatch):
         Settings(_env_file=None)
 
 
+def test_cors_origins_normalisation(monkeypatch):
+    """The list-comp in main.py strips whitespace and drops empty entries."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/db")
+    monkeypatch.setenv("UPLOADS_DIR", "./uploads")
+    monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173, http://localhost:3000, ")
+
+    from app.core.config import Settings
+
+    s = Settings()
+    origins = [o.strip() for o in s.CORS_ORIGINS.split(",") if o.strip()]
+    assert origins == ["http://localhost:5173", "http://localhost:3000"]
+
+
 def test_get_settings_is_cached(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/db")
