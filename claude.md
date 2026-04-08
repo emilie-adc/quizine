@@ -55,23 +55,6 @@ quizine/
 
 ---
 
-## What is already built
-
-| File | Status | Notes |
-|------|--------|-------|
-| `backend/app/api/generate.py` | ✅ done | MCQ endpoint with streaming SSE, cert-aware prompt |
-| `backend/app/main.py` | ⚠️ needs fix | CORS origin hardcoded — must read from env |
-| `backend/Dockerfile` | ✅ done | |
-| `docker-compose.yml` | ✅ done | API + Postgres, hot-reload |
-| `backend/requirements.txt` | ✅ done | Pinned versions |
-| `backend/app/api/generate.py` flashcards route | ❌ missing | Phase 1 loose end — do this first |
-| `backend/app/core/config.py` | ❌ missing | |
-| `backend/app/api/certifications.py` | ❌ missing | |
-| `backend/seed/certifications.json` | ❌ missing | |
-| Everything else | ❌ not started | |
-
----
-
 ## Certification data model — read carefully
 
 This is the most important structural concept in the app.
@@ -125,6 +108,43 @@ A startup script (`seed_certifications.py`) reads this file and upserts into the
 
 ---
 
+## Post-task browser verification — mandatory
+After completing any task that produces a visible UI change or a new API endpoint,
+you MUST verify it using Claude in Chrome before marking the task complete.
+
+### For frontend tasks (any Txx touching `frontend/`):
+- Confirm the Vite dev server is running on localhost:5173
+- Open the relevant page in Chrome
+- Interact with the new feature (click buttons, submit forms, trigger the happy path)
+- Check the browser console for errors — report any found
+- Check the network tab — confirm API calls return expected status codes
+- Only mark the task complete if no console errors and the feature behaves as specified
+
+### For backend tasks (any Txx touching `backend/`):
+- Confirm the Docker stack is running on localhost:8000
+- Open localhost:8000/docs in Chrome
+- Find the new or modified endpoint in Swagger UI
+- Execute it with realistic test input
+- Confirm the response shape matches the schema defined in CLAUDE.md
+- Only mark the task complete if the response is correct
+
+### For full-stack tasks:
+Run both checks above in sequence.
+
+If Chrome integration is not connected: run `/chrome` in the VS Code panel to reconnect before starting verification. Do not skip verification — flag it explicitly if Chrome is unavailable.
+
+Report format after each verification:
+```
+Browser check ✅
+- Opened: localhost:5173/[page]
+- Tested: [what was clicked/submitted]
+- Console: clean / [list any errors]
+- Network: [endpoint] returned [status]
+- Result: pass / fail + detail if fail
+```
+
+---
+
 ## Conventions — follow these exactly
 
 ### Python
@@ -149,8 +169,8 @@ A startup script (`seed_certifications.py`) reads this file and upserts into the
 - Tailwind only
 
 ### Git
-- Branch per feature: `feat/`, `fix/`, `chore/`
-- Commit format: `feat(generate): add flashcards endpoint`
+- One branch per phase: `feat/phase-N`
+- Commit format: `feat(scope): description (Txx)`
 
 ---
 
@@ -177,7 +197,7 @@ API docs: http://localhost:8000/docs
 
 Work through in order. Tick and note when done. Do not skip ahead.
 
-### Immediate (Phase 1 close-out + Phase 2 setup)
+### Phase 1 — bootstrap
 
 - [x] **T01** — Create `backend/app/core/config.py` with pydantic-settings. ✅ 2026-04-08
       Fields: `ANTHROPIC_API_KEY`, `DATABASE_URL`, `UPLOADS_DIR`, `CORS_ORIGINS`.
@@ -228,9 +248,9 @@ Work through in order. Tick and note when done. Do not skip ahead.
 - [x] **T13** — Seed script: `backend/seed_certifications.py` — upserts from
       `certifications.json` on startup. Hook into `main.py` lifespan. ✅ 2026-04-08
 
-- [x] **T14** — `POST /decks`, `GET /decks`, `GET /decks/{id}`.
+- [x] **T14** — `POST /decks`, `GET /decks`, `GET /decks/{id}`. ✅ 2026-04-08
       Deck creation accepts either `cert_id` (verified) or `custom_cert_name` (custom).
-      Wire generation to persist chunks + cards post-generation. ✅ 2026-04-08
+      Wire generation to persist chunks + cards post-generation.
 
 - [x] **T15** — `PATCH /cards/{id}`, `DELETE /cards/{id}`, `POST /cards/{id}/approve`. ✅ 2026-04-08
 
