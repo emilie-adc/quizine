@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api import generate
+from app.api import certifications, generate
 
 app = FastAPI(title="Quizine")
 
@@ -15,3 +15,4 @@ app.add_middleware(
 )
 
 app.include_router(generate.router, prefix="/generate", tags=["generate"])
+app.include_router(certifications.router, prefix="/certifications", tags=["certifications"])

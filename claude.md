@@ -198,7 +198,7 @@ Work through in order. Tick and note when done. Do not skip ahead.
       Each entry: `slug`, `display_name`, `provider`, `level`, `pass_score_pct`,
       `prompt_context`, `domains[]` (`name`, `slug`, `weight_pct`, `description`).
 
-- [ ] **T06** — Create `backend/app/api/certifications.py`.
+- [x] **T06** — Create `backend/app/api/certifications.py`. ✅ 2026-04-08
       `GET /certifications` — list all verified certs (for UI picker).
       `GET /certifications/{slug}` — detail with domains.
       `GET /certifications/{slug}/domains` — domain list with weights.
