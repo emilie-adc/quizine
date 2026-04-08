@@ -68,8 +68,16 @@ async def generate_mcq(
     if not raw:
         raise ValueError("Anthropic returned no text content")
     try:
-        return json.loads(raw)
+        parsed = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise ValueError(
             f"Anthropic returned invalid JSON: {exc}\nRaw response: {raw!r}"
         ) from exc
+
+    if not isinstance(parsed, list):
+        raise ValueError(
+            f"Anthropic returned JSON of type {type(parsed).__name__}, expected a list"
+        )
+    if not all(isinstance(item, dict) for item in parsed):
+        raise ValueError("Anthropic returned a JSON array containing non-object items")
+    return parsed
