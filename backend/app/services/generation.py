@@ -1,6 +1,7 @@
 import functools
 import json
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from anthropic import AsyncAnthropic
 
@@ -20,17 +21,21 @@ def _get_client() -> AsyncAnthropic:
     return AsyncAnthropic(api_key=get_settings().ANTHROPIC_API_KEY)
 
 
+def _build_user_prompt(text: str, certification: str | None, n_questions: int) -> str:
+    cert_block = f"Certification context:\n{certification}\n\n" if certification else ""
+    return (
+        f"{cert_block}"
+        f"Generate {n_questions} multiple-choice questions from the content below.\n\n"
+        f"{text}"
+    )
+
+
 async def stream_mcq(
     text: str,
     certification: str | None,
     n_questions: int,
 ) -> AsyncGenerator[str, None]:
-    cert_block = f"Certification context:\n{certification}\n\n" if certification else ""
-    user_prompt = (
-        f"{cert_block}"
-        f"Generate {n_questions} multiple-choice questions from the content below.\n\n"
-        f"{text}"
-    )
+    user_prompt = _build_user_prompt(text, certification, n_questions)
 
     async with _get_client().messages.stream(
         model="claude-opus-4-6",
@@ -41,3 +46,21 @@ async def stream_mcq(
         async for chunk in stream.text_stream:
             yield f"data: {json.dumps({'delta': chunk})}\n\n"
         yield "data: [DONE]\n\n"
+
+
+async def generate_mcq(
+    text: str,
+    certification: str | None,
+    n_questions: int,
+) -> list[dict[str, Any]]:
+    """Return the fully generated MCQ array as a Python list (non-streaming)."""
+    user_prompt = _build_user_prompt(text, certification, n_questions)
+
+    message = await _get_client().messages.create(
+        model="claude-opus-4-6",
+        max_tokens=4096,
+        system=_MCQ_SYSTEM,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    raw = message.content[0].text
+    return json.loads(raw)
