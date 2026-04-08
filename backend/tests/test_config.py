@@ -40,8 +40,10 @@ def test_settings_missing_required_field(monkeypatch):
     monkeypatch.setenv("UPLOADS_DIR", "./uploads")
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173")
 
-    # Import the class directly; instantiation reads env at call time
+    # Import the class directly; instantiation reads env at call time.
+    # Pass _env_file=None so pydantic-settings doesn't fall back to the .env file
+    # (which may contain a real key and would mask the missing-field error).
     from backend.app.core.config import Settings
 
     with pytest.raises(ValidationError):
-        Settings()
+        Settings(_env_file=None)

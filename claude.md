@@ -179,11 +179,11 @@ Work through in order. Tick and note when done. Do not skip ahead.
 
 ### Immediate (Phase 1 close-out + Phase 2 setup)
 
-- [ ] **T01** — Create `backend/app/core/config.py` with pydantic-settings.
+- [x] **T01** — Create `backend/app/core/config.py` with pydantic-settings. ✅ 2026-04-08
       Fields: `ANTHROPIC_API_KEY`, `DATABASE_URL`, `UPLOADS_DIR`, `CORS_ORIGINS`.
       Export a `settings` singleton.
 
-- [ ] **T02** — Fix `backend/app/main.py`: import `settings`, replace hardcoded CORS origin
+- [x] **T02** — Fix `backend/app/main.py`: import `settings`, replace hardcoded CORS origin ✅ 2026-04-08
       with `settings.CORS_ORIGINS.split(",")`. Update app title to "Quizine".
 
 - [ ] **T03** — Add `POST /generate/flashcards` to `backend/app/api/generate.py`.
