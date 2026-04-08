@@ -62,5 +62,7 @@ async def generate_mcq(
         system=_MCQ_SYSTEM,
         messages=[{"role": "user", "content": user_prompt}],
     )
+    if not message.content:
+        raise ValueError("Anthropic returned an empty response")
     raw = message.content[0].text
     return json.loads(raw)
