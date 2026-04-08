@@ -60,14 +60,14 @@ quizine/
 | File | Status | Notes |
 |------|--------|-------|
 | `backend/app/api/generate.py` | ✅ done | MCQ endpoint with streaming SSE, cert-aware prompt |
-| `backend/app/main.py` | ⚠️ needs fix | CORS origin hardcoded — must read from env |
+| `backend/app/main.py` | ✅ done | CORS origins read from settings |
 | `backend/Dockerfile` | ✅ done | |
 | `docker-compose.yml` | ✅ done | API + Postgres, hot-reload |
 | `backend/requirements.txt` | ✅ done | Pinned versions |
 | `backend/app/api/generate.py` flashcards route | ❌ missing | Phase 1 loose end — do this first |
-| `backend/app/core/config.py` | ❌ missing | |
+| `backend/app/core/config.py` | ✅ done | pydantic-settings, reads .env |
 | `backend/app/api/certifications.py` | ❌ missing | |
-| `backend/seed/certifications.json` | ❌ missing | |
+| `backend/seed/certifications.json` | ✅ done | Verified cert catalogue seed data |
 | Everything else | ❌ not started | |
 
 ---
