@@ -212,7 +212,7 @@ Work through in order. Tick and note when done. Do not skip ahead.
 
 - [x] **T09** — `frontend/src/api/certifications.ts` — typed wrapper for cert list + detail. ✅ 2026-04-08
 
-- [ ] **T10** — Generation page (`src/pages/Generate.tsx`):
+- [x] **T10** — Generation page (`src/pages/Generate.tsx`): ✅ 2026-04-08
       cert picker (dropdown of verified certs + "custom" option with free-text fallback),
       text area, mode toggle (flashcard / MCQ), Generate button.
       Stream cards into view as SSE deltas arrive.
