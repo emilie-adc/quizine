@@ -1,0 +1,70 @@
+[
+  {
+    "slug": "databricks-ml-associate",
+    "display_name": "Databricks Certified Machine Learning Associate",
+    "provider": "Databricks",
+    "level": "Associate",
+    "pass_score_pct": 70,
+    "prompt_context": "Databricks Certified Machine Learning Associate. Topics by weight:\n- Databricks Machine Learning (38%): AutoML, MLflow tracking and registry, Unity Catalog for ML, Databricks ML runtimes, MLOps best practices\n- Model Development (31%): data exploration, feature engineering, model training, hyperparameter tuning, evaluation metrics, model selection\n- ML Workflows (19%): end-to-end pipeline design, feature stores, reproducible experiments, data preprocessing\n- Model Deployment (12%): batch and real-time inference, deployment strategies, model serving\nPass mark: 70%. Format: 48 multiple-choice questions, 90 minutes. Question style: practitioner-level, scenario-based, focused on Databricks tooling.",
+    "domains": [
+      {
+        "name": "Databricks Machine Learning",
+        "slug": "databricks-ml",
+        "weight_pct": 38,
+        "description": "AutoML, MLflow tracking and registry, Unity Catalog for ML, Databricks ML runtimes, MLOps best practices"
+      },
+      {
+        "name": "Model Development",
+        "slug": "model-development",
+        "weight_pct": 31,
+        "description": "Data exploration, feature engineering, model training, hyperparameter tuning, evaluation metrics, model selection"
+      },
+      {
+        "name": "ML Workflows",
+        "slug": "ml-workflows",
+        "weight_pct": 19,
+        "description": "End-to-end pipeline design, feature stores, reproducible experiments, data preprocessing"
+      },
+      {
+        "name": "Model Deployment",
+        "slug": "model-deployment",
+        "weight_pct": 12,
+        "description": "Batch and real-time inference, deployment strategies, model serving on Databricks"
+      }
+    ]
+  },
+  {
+    "slug": "databricks-ml-professional",
+    "display_name": "Databricks Certified Machine Learning Professional",
+    "provider": "Databricks",
+    "level": "Professional",
+    "pass_score_pct": 70,
+    "prompt_context": "Databricks Certified Machine Learning Professional. Topics by weight:\n- Experimentation (30%): tracking and versioning experiments, data preprocessing, feature engineering, designing reproducible ML experiments with MLflow\n- Model Lifecycle Management (30%): full model lifecycle including training, versioning, model registry, CI/CD pipelines, MLflow and Unity Catalog integration\n- Model Deployment (25%): production deployment patterns, custom model serving, model rollout strategies, scalable inference\n- Solution and Data Monitoring (15%): detecting data drift, monitoring model performance in production, maintaining solution quality\nPass mark: 70%. Format: 60 multiple-choice questions, 120 minutes. Question style: advanced practitioner, scenario-based, assumes Associate-level knowledge.",
+    "domains": [
+      {
+        "name": "Experimentation",
+        "slug": "experimentation",
+        "weight_pct": 30,
+        "description": "Tracking and versioning experiments, data preprocessing, feature engineering, reproducible ML experiments with MLflow"
+      },
+      {
+        "name": "Model Lifecycle Management",
+        "slug": "model-lifecycle-management",
+        "weight_pct": 30,
+        "description": "Full model lifecycle: training, versioning, model registry, CI/CD pipelines, MLflow and Unity Catalog integration"
+      },
+      {
+        "name": "Model Deployment",
+        "slug": "model-deployment-pro",
+        "weight_pct": 25,
+        "description": "Production deployment patterns, custom model serving, model rollout strategies, scalable inference"
+      },
+      {
+        "name": "Solution and Data Monitoring",
+        "slug": "solution-data-monitoring",
+        "weight_pct": 15,
+        "description": "Detecting data drift, monitoring model performance in production, maintaining solution quality"
+      }
+    ]
+  }
+]
