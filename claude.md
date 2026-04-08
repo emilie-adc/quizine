@@ -210,7 +210,7 @@ Work through in order. Tick and note when done. Do not skip ahead.
 
 - [x] **T08** — `frontend/src/api/generate.ts` — typed SSE wrappers for both generate endpoints. ✅ 2026-04-08
 
-- [ ] **T09** — `frontend/src/api/certifications.ts` — typed wrapper for cert list + detail.
+- [x] **T09** — `frontend/src/api/certifications.ts` — typed wrapper for cert list + detail. ✅ 2026-04-08
 
 - [ ] **T10** — Generation page (`src/pages/Generate.tsx`):
       cert picker (dropdown of verified certs + "custom" option with free-text fallback),
