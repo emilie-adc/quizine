@@ -1,3 +1,4 @@
+import functools
 import json
 from collections.abc import AsyncGenerator
 
@@ -14,12 +15,16 @@ _MCQ_SYSTEM = (
 )
 
 
+@functools.lru_cache(maxsize=1)
+def _get_client() -> AsyncAnthropic:
+    return AsyncAnthropic(api_key=get_settings().ANTHROPIC_API_KEY)
+
+
 async def stream_mcq(
     text: str,
     certification: str | None,
     n_questions: int,
 ) -> AsyncGenerator[str, None]:
-    client = AsyncAnthropic(api_key=get_settings().ANTHROPIC_API_KEY)
     cert_block = f"Certification context:\n{certification}\n\n" if certification else ""
     user_prompt = (
         f"{cert_block}"
@@ -27,7 +32,7 @@ async def stream_mcq(
         f"{text}"
     )
 
-    async with client.messages.stream(
+    async with _get_client().messages.stream(
         model="claude-opus-4-6",
         max_tokens=4096,
         system=_MCQ_SYSTEM,
