@@ -1,4 +1,4 @@
-"""Tests for the /generate/mcq endpoint and the generation service.
+"""Tests for the /generate/mcq and /generate/flashcards endpoints and the generation service.
 
 All Anthropic API calls are mocked; no network access is required.
 """
@@ -34,6 +34,19 @@ _SAMPLE_QUESTIONS: list[dict] = [
     },
 ]
 
+_SAMPLE_FLASHCARDS: list[dict] = [
+    {
+        "front": "What is Delta Lake?",
+        "back": "An open-source storage layer that brings reliability to data lakes.",
+        "topic_tag": "Delta Lake",
+    },
+    {
+        "front": "What is Unity Catalog?",
+        "back": "A unified governance solution for all data assets in Databricks.",
+        "topic_tag": "Unity Catalog",
+    },
+]
+
 
 class _MockStream:
     """Async context manager that mimics the Anthropic streaming response."""
@@ -62,6 +75,11 @@ def sample_questions() -> list[dict]:
 
 
 @pytest.fixture()
+def sample_flashcards() -> list[dict]:
+    return list(_SAMPLE_FLASHCARDS)
+
+
+@pytest.fixture()
 def non_stream_mock(sample_questions: list[dict]):
     """Patch _get_client so messages.create returns sample questions as JSON."""
     raw_json = json.dumps(sample_questions)
@@ -78,9 +96,39 @@ def non_stream_mock(sample_questions: list[dict]):
 
 
 @pytest.fixture()
+def non_stream_flashcard_mock(sample_flashcards: list[dict]):
+    """Patch _get_client so messages.create returns sample flashcards as JSON."""
+    raw_json = json.dumps(sample_flashcards)
+    content_block = MagicMock()
+    content_block.text = raw_json
+    message = MagicMock()
+    message.content = [content_block]
+
+    anthropic_client = MagicMock()
+    anthropic_client.messages.create = AsyncMock(return_value=message)
+
+    with patch("app.services.generation._get_client", return_value=anthropic_client):
+        yield anthropic_client
+
+
+@pytest.fixture()
 def stream_mock(sample_questions: list[dict]):
     """Patch _get_client so messages.stream yields sample questions in two chunks."""
     raw_json = json.dumps(sample_questions)
+    mid = len(raw_json) // 2
+    chunks = [raw_json[:mid], raw_json[mid:]]
+
+    anthropic_client = MagicMock()
+    anthropic_client.messages.stream = MagicMock(return_value=_MockStream(chunks))
+
+    with patch("app.services.generation._get_client", return_value=anthropic_client):
+        yield anthropic_client
+
+
+@pytest.fixture()
+def stream_flashcard_mock(sample_flashcards: list[dict]):
+    """Patch _get_client so messages.stream yields sample flashcards in two chunks."""
+    raw_json = json.dumps(sample_flashcards)
     mid = len(raw_json) // 2
     chunks = [raw_json[:mid], raw_json[mid:]]
 
@@ -273,3 +321,93 @@ async def test_service_raises_on_non_list_json():
 
         with pytest.raises(ValueError, match="expected a list"):
             await generate_mcq("text", None, 1)
+
+
+# ---------------------------------------------------------------------------
+# Flashcard non-streaming endpoint tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_flashcard_non_streaming_status_200(non_stream_flashcard_mock, app):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/generate/flashcards",
+            json={"text": "Study material", "stream": False},
+        )
+    assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_flashcard_non_streaming_returns_list(non_stream_flashcard_mock, app):
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/generate/flashcards",
+            json={"text": "Study material", "stream": False},
+        )
+    assert isinstance(resp.json(), list)
+
+
+@pytest.mark.asyncio
+async def test_flashcard_non_streaming_required_keys(non_stream_flashcard_mock, app):
+    """Every flashcard object must contain the three required keys."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/generate/flashcards",
+            json={"text": "Study material", "stream": False},
+        )
+    required_keys = {"front", "back", "topic_tag"}
+    for card in resp.json():
+        assert required_keys.issubset(card.keys())
+
+
+# ---------------------------------------------------------------------------
+# Flashcard streaming endpoint tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_flashcard_streaming_content_type(stream_flashcard_mock, app):
+    """Streaming flashcards endpoint must respond with text/event-stream."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/generate/flashcards",
+            json={"text": "Study material", "stream": True},
+        )
+    assert resp.status_code == 200
+    assert "text/event-stream" in resp.headers["content-type"]
+
+
+@pytest.mark.asyncio
+async def test_flashcard_streaming_sse_delta_format(stream_flashcard_mock, app):
+    """All non-terminal SSE events for flashcards must be JSON objects with a delta key."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/generate/flashcards",
+            json={"text": "Study material", "stream": True},
+        )
+    events = [e for e in resp.text.strip().split("\n\n") if e]
+    for event in events[:-1]:
+        assert event.startswith("data: ")
+        payload = json.loads(event[len("data: "):])
+        assert "delta" in payload
+
+
+@pytest.mark.asyncio
+async def test_flashcard_streaming_ends_with_done(stream_flashcard_mock, app):
+    """The final SSE event for flashcards must be data: [DONE]."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/generate/flashcards",
+            json={"text": "Study material", "stream": True},
+        )
+    events = [e for e in resp.text.strip().split("\n\n") if e]
+    assert events[-1] == "data: [DONE]"
+
+
+@pytest.mark.asyncio
+async def test_flashcard_request_missing_text_returns_422(app):
+    """Omitting the required text field for flashcards must yield HTTP 422."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post("/generate/flashcards", json={"stream": False})
+    assert resp.status_code == 422
