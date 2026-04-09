@@ -6,8 +6,22 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
 
+def _get_app():
+    from app.main import app as fastapi_app
+
+    return fastapi_app
+
+
+class _LazyAppProxy:
+    def __getattr__(self, name):
+        return getattr(_get_app(), name)
+
+    async def __call__(self, scope, receive, send):
+        await _get_app()(scope, receive, send)
+
+
+app = _LazyAppProxy()
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
