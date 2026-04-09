@@ -15,8 +15,8 @@ Single-user. No auth in v1.
 
 ```
 quizine/
-├── CLAUDE.md                  ← you are here
-├── DECISIONS.md               ← architecture decisions — read before changing anything
+├── claude.md                  ← you are here
+├── decisions.md               ← architecture decisions — read before changing anything
 ├── docker-compose.yml
 ├── .env.example
 ├── backend/
@@ -25,7 +25,7 @@ quizine/
 │   │   ├── core/
 │   │   │   └── config.py      ← pydantic-settings, reads .env
 │   │   ├── api/
-│   │   │   ├── generate.py    ← /generate/mcq, /generate/flashcards
+│   │   │   ├── generate.py    ← /generate/mcq
 │   │   │   ├── ingest.py
 │   │   │   ├── certifications.py  ← /certifications CRUD + seeding
 │   │   │   ├── decks.py
@@ -60,14 +60,14 @@ quizine/
 | File | Status | Notes |
 |------|--------|-------|
 | `backend/app/api/generate.py` | ✅ done | MCQ endpoint with streaming SSE, cert-aware prompt |
-| `backend/app/main.py` | ⚠️ needs fix | CORS origin hardcoded — must read from env |
+| `backend/app/main.py` | ✅ done | CORS origins read from settings |
 | `backend/Dockerfile` | ✅ done | |
-| `docker-compose.yml` | ✅ done | API + Postgres, hot-reload |
+| `docker-compose.yml` | ✅ done | API + Postgres development setup |
 | `backend/requirements.txt` | ✅ done | Pinned versions |
 | `backend/app/api/generate.py` flashcards route | ❌ missing | Phase 1 loose end — do this first |
-| `backend/app/core/config.py` | ❌ missing | |
+| `backend/app/core/config.py` | ✅ done | pydantic-settings, reads .env |
 | `backend/app/api/certifications.py` | ❌ missing | |
-| `backend/seed/certifications.json` | ❌ missing | |
+| `backend/seed/certifications.json` | ✅ done | Verified cert catalogue seed data |
 | Everything else | ❌ not started | |
 
 ---
