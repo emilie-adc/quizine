@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings, parse_cors_origins
-from app.api import generate
+from app.api import certifications, generate
 
 app = FastAPI(title="Quizine")
 
