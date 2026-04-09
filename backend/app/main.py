@@ -6,15 +6,12 @@ from app.api import generate
 
 app = FastAPI(title="Quizine")
 
-
-@app.on_event("startup")
-def configure_cors() -> None:
-    settings = get_settings()
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=parse_cors_origins(settings.CORS_ORIGINS),
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+settings = get_settings()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=parse_cors_origins(settings.CORS_ORIGINS),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(generate.router, prefix="/generate", tags=["generate"])
