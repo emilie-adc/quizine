@@ -127,7 +127,7 @@ service doesn't need to know anything about specific certifications — it just 
 `prompt_context` from whatever cert is linked to the deck.
 
 **Format:** Plain prose, ~100–200 words. Topics listed with percentages. Pass mark.
-Question style guidance. See `CLAUDE.md` for the canonical example.
+Question style guidance. See `claude.md` for the canonical example.
 
 **Do not:** Hardcode cert-specific context in `generation.py` or any service file.
 
