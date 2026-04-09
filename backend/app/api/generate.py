@@ -33,6 +33,8 @@ async def generate_flashcards(req: FlashcardRequest) -> StreamingResponse | JSON
         req.text, req.certification, req.n_cards, req.topic_tags
     )
     return JSONResponse(content=cards)
+
+
 @router.post("/mcq", response_model=None)
 async def generate_mcq(req: MCQRequest) -> StreamingResponse | JSONResponse:
     if req.stream:
