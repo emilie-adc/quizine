@@ -22,20 +22,17 @@ class MCQRequest(BaseModel):
     stream: bool = True
 
 
-@router.post("/flashcards")
-async def generate_flashcards(req: FlashcardRequest) -> StreamingResponse:
-    return StreamingResponse(
-        generation.stream_flashcards(req.text, req.certification, req.n_cards, req.topic_tags),
-        media_type="text/event-stream",
+@router.post("/flashcards", response_model=None)
+async def generate_flashcards(req: FlashcardRequest) -> StreamingResponse | JSONResponse:
+    if req.stream:
+        return StreamingResponse(
+            generation.stream_flashcards(req.text, req.certification, req.n_cards, req.topic_tags),
+            media_type="text/event-stream",
+        )
+    cards = await generation.generate_flashcards(
+        req.text, req.certification, req.n_cards, req.topic_tags
     )
-
-
-@router.post("/mcq")
-async def generate_mcq(req: MCQRequest) -> StreamingResponse:
-    return StreamingResponse(
-        generation.stream_mcq(req.text, req.certification, req.n_questions),
-        media_type="text/event-stream",
-    )
+    return JSONResponse(content=cards)
 @router.post("/mcq", response_model=None)
 async def generate_mcq(req: MCQRequest) -> StreamingResponse | JSONResponse:
     if req.stream:
