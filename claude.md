@@ -194,11 +194,11 @@ Work through in order. Tick and note when done. Do not skip ahead.
 - [x] **T04** — Write `backend/tests/test_generate.py`. Mock Anthropic client. ✅ 2026-04-08
       Assert: correct response shape, exactly 1 correct MCQ answer, exactly 4 options.
 
-- [ ] **T05** — Create `backend/seed/certifications.json` with the 5 launch certs.
+- [x] **T05** — Create `backend/seed/certifications.json` with the 5 launch certs. ✅ 2026-04-08
       Each entry: `slug`, `display_name`, `provider`, `level`, `pass_score_pct`,
       `prompt_context`, `domains[]` (`name`, `slug`, `weight_pct`, `description`).
 
-- [ ] **T06** — Create `backend/app/api/certifications.py`.
+- [x] **T06** — Create `backend/app/api/certifications.py`. ✅ 2026-04-08
       `GET /certifications` — list all verified certs (for UI picker).
       `GET /certifications/{slug}` — detail with domains.
       `GET /certifications/{slug}/domains` — domain list with weights.
