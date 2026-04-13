@@ -131,6 +131,9 @@ export default function Generate() {
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cards, setCards] = useState<Card[]>([])
+  // Tracks the mode that was active when the current cards were generated,
+  // so result labels stay correct even if the user toggles mode mid-stream.
+  const [resultMode, setResultMode] = useState<Mode>('flashcard')
 
   useEffect(() => {
     listCertifications()
@@ -151,6 +154,7 @@ export default function Generate() {
 
     // Capture mode so a mid-stream toggle doesn't corrupt parsing.
     const modeAtStart = mode
+    setResultMode(modeAtStart)
     let accumulated = ''
     let parsedUpTo = 0
 
@@ -198,7 +202,8 @@ export default function Generate() {
           <select
             value={certSlug}
             onChange={e => setCertSlug(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            disabled={generating}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {certs.map(c => (
               <option key={c.slug} value={c.slug}>{c.display_name}</option>
@@ -222,7 +227,8 @@ export default function Generate() {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              disabled={generating}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 mode === m
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white border border-gray-300 text-gray-600 hover:border-indigo-400'
@@ -262,7 +268,7 @@ export default function Generate() {
         {cards.length > 0 && (
           <div className="mt-8 space-y-4">
             <p className="text-sm text-gray-500">
-              {cards.length} {mode === 'flashcard' ? 'flashcard' : 'question'}{cards.length !== 1 ? 's' : ''}
+              {cards.length} {resultMode === 'flashcard' ? 'flashcard' : 'question'}{cards.length !== 1 ? 's' : ''}
               {generating ? ' — generating…' : ''}
             </p>
             {cards.map((card, i) =>
