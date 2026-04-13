@@ -64,6 +64,17 @@ async function readSSEStream(
     }
   }
 
+  buffer += decoder.decode()
+  const remainingLines = buffer.split('\n')
+
+  for (const line of remainingLines) {
+    if (!line.startsWith('data: ')) continue
+    const payload = line.slice('data: '.length)
+    if (payload === '[DONE]') return accumulated
+    const { delta } = JSON.parse(payload) as { delta: string }
+    accumulated += delta
+    onDelta(delta)
+  }
   return accumulated
 }
 
