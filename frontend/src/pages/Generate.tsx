@@ -269,7 +269,8 @@ export default function Generate() {
             placeholder="Paste your notes, documentation, or any study material here…"
             value={text}
             onChange={e => setText(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            disabled={generating}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
           />
         </div>
 
