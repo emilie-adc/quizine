@@ -10,15 +10,21 @@ type Mode = 'flashcard' | 'mcq'
 type Card = Flashcard | MCQQuestion
 
 /**
- * Extract complete JSON objects from a partial JSON array string.
- * Enables progressive card rendering as the SSE stream arrives.
+ * Extract complete JSON objects from a partial JSON array string, starting at
+ * `startIndex` so only newly arrived content is scanned on each SSE delta.
+ * Returns the parsed objects and the index after the last consumed character,
+ * which should be passed as `startIndex` on the next call.
  */
-function parsePartialCards<T>(partial: string): T[] {
+function parsePartialCards<T>(
+  partial: string,
+  startIndex: number = 0,
+): { cards: T[]; nextIndex: number } {
   const cards: T[] = []
   let depth = 0
   let start = -1
+  let nextIndex = startIndex
 
-  for (let i = 0; i < partial.length; i++) {
+  for (let i = startIndex; i < partial.length; i++) {
     const ch = partial[i]
     if (ch === '{') {
       if (depth === 0) start = i
@@ -28,6 +34,7 @@ function parsePartialCards<T>(partial: string): T[] {
       if (depth === 0 && start !== -1) {
         try {
           cards.push(JSON.parse(partial.slice(start, i + 1)) as T)
+          nextIndex = i + 1
         } catch {
           // Incomplete object — skip
         }
@@ -36,7 +43,7 @@ function parsePartialCards<T>(partial: string): T[] {
     }
   }
 
-  return cards
+  return { cards, nextIndex }
 }
 
 function isFlashcard(card: Card): card is Flashcard {
@@ -133,18 +140,30 @@ export default function Generate() {
     setError(null)
     setCards([])
 
+    // Capture mode so a mid-stream toggle doesn't corrupt parsing.
+    const modeAtStart = mode
     let accumulated = ''
+    let parsedUpTo = 0
+
     const onDelta = (delta: string) => {
       accumulated += delta
-      if (mode === 'flashcard') {
-        setCards(parsePartialCards<Flashcard>(accumulated))
+      if (modeAtStart === 'flashcard') {
+        const { cards: newCards, nextIndex } = parsePartialCards<Flashcard>(accumulated, parsedUpTo)
+        if (newCards.length > 0) {
+          parsedUpTo = nextIndex
+          setCards(prev => [...prev, ...newCards])
+        }
       } else {
-        setCards(parsePartialCards<MCQQuestion>(accumulated))
+        const { cards: newCards, nextIndex } = parsePartialCards<MCQQuestion>(accumulated, parsedUpTo)
+        if (newCards.length > 0) {
+          parsedUpTo = nextIndex
+          setCards(prev => [...prev, ...newCards])
+        }
       }
     }
 
     try {
-      if (mode === 'flashcard') {
+      if (modeAtStart === 'flashcard') {
         await streamFlashcards({ text, certification: certContext }, onDelta)
       } else {
         await streamMCQ({ text, certification: certContext }, onDelta)
