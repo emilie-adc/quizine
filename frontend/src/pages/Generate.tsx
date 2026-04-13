@@ -23,9 +23,30 @@ function parsePartialCards<T>(
   let depth = 0
   let start = -1
   let nextIndex = startIndex
+  let inString = false
+  let escaped = false
 
   for (let i = startIndex; i < partial.length; i++) {
     const ch = partial[i]
+
+    // Handle escape sequences inside strings so \" doesn't end the string
+    // and \{ / \} don't affect brace depth.
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (ch === '\\' && inString) {
+      escaped = true
+      continue
+    }
+
+    // Track string boundaries; braces inside strings must be ignored.
+    if (ch === '"') {
+      inString = !inString
+      continue
+    }
+    if (inString) continue
+
     if (ch === '{') {
       if (depth === 0) start = i
       depth++
