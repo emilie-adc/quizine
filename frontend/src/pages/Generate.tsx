@@ -43,6 +43,15 @@ function parsePartialCards<T>(
     }
   }
 
+  // Advance past all scanned content so the caller never re-scans it.
+  // If we're mid-object (depth > 0), rewind to its opening brace so the
+  // partial object is re-scanned once the next delta completes it.
+  if (depth === 0) {
+    nextIndex = partial.length
+  } else if (start !== -1) {
+    nextIndex = start
+  }
+
   return { cards, nextIndex }
 }
 
@@ -149,14 +158,14 @@ export default function Generate() {
       accumulated += delta
       if (modeAtStart === 'flashcard') {
         const { cards: newCards, nextIndex } = parsePartialCards<Flashcard>(accumulated, parsedUpTo)
+        parsedUpTo = nextIndex
         if (newCards.length > 0) {
-          parsedUpTo = nextIndex
           setCards(prev => [...prev, ...newCards])
         }
       } else {
         const { cards: newCards, nextIndex } = parsePartialCards<MCQQuestion>(accumulated, parsedUpTo)
+        parsedUpTo = nextIndex
         if (newCards.length > 0) {
-          parsedUpTo = nextIndex
           setCards(prev => [...prev, ...newCards])
         }
       }
