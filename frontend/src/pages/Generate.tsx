@@ -159,7 +159,7 @@ export default function Generate() {
   useEffect(() => {
     listCertifications()
       .then(setCerts)
-      .catch(() => {/* backend not up yet — cert list stays empty */})
+      .catch(() => undefined)
   }, [])
 
   const certContext =
