@@ -173,9 +173,11 @@ export default function Generate() {
 
     try {
       if (modeAtStart === 'flashcard') {
-        await streamFlashcards({ text, certification: certContext }, onDelta)
+        const finalCards = await streamFlashcards({ text, certification: certContext }, onDelta)
+        setCards(finalCards)
       } else {
-        await streamMCQ({ text, certification: certContext }, onDelta)
+        const finalCards = await streamMCQ({ text, certification: certContext }, onDelta)
+        setCards(finalCards)
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Generation failed')
