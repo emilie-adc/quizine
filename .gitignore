@@ -217,7 +217,7 @@ dist/
 
 # Docker / uploads
 backend/uploads/*
-!backend/uploads/.gitignore
+!backend/uploads/.gitkeep
 
 # OS
 .DS_Store

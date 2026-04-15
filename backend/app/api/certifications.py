@@ -10,7 +10,7 @@ from app.services import certifications as cert_service
 router = APIRouter()
 
 
-@router.get("", response_model=list[CertificationSummary])
+@router.get("/", response_model=list[CertificationSummary])
 async def list_certifications(db: AsyncSession = Depends(get_db)) -> list[CertificationSummary]:
     return await cert_service.list_certifications(db)
 

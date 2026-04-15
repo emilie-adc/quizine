@@ -10,16 +10,43 @@ type Mode = 'flashcard' | 'mcq'
 type Card = Flashcard | MCQQuestion
 
 /**
- * Extract complete JSON objects from a partial JSON array string.
- * Enables progressive card rendering as the SSE stream arrives.
+ * Extract complete JSON objects from a partial JSON array string, starting at
+ * `startIndex` so only newly arrived content is scanned on each SSE delta.
+ * Returns the parsed objects and the index after the last consumed character,
+ * which should be passed as `startIndex` on the next call.
  */
-function parsePartialCards<T>(partial: string): T[] {
+function parsePartialCards<T>(
+  partial: string,
+  startIndex: number = 0,
+): { cards: T[]; nextIndex: number } {
   const cards: T[] = []
   let depth = 0
   let start = -1
+  let nextIndex = startIndex
+  let inString = false
+  let escaped = false
 
-  for (let i = 0; i < partial.length; i++) {
+  for (let i = startIndex; i < partial.length; i++) {
     const ch = partial[i]
+
+    // Handle escape sequences inside strings so \" doesn't end the string
+    // and \{ / \} don't affect brace depth.
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (ch === '\\' && inString) {
+      escaped = true
+      continue
+    }
+
+    // Track string boundaries; braces inside strings must be ignored.
+    if (ch === '"') {
+      inString = !inString
+      continue
+    }
+    if (inString) continue
+
     if (ch === '{') {
       if (depth === 0) start = i
       depth++
@@ -28,6 +55,7 @@ function parsePartialCards<T>(partial: string): T[] {
       if (depth === 0 && start !== -1) {
         try {
           cards.push(JSON.parse(partial.slice(start, i + 1)) as T)
+          nextIndex = i + 1
         } catch {
           // Incomplete object — skip
         }
@@ -36,7 +64,16 @@ function parsePartialCards<T>(partial: string): T[] {
     }
   }
 
-  return cards
+  // Advance past all scanned content so the caller never re-scans it.
+  // If we're mid-object (depth > 0), rewind to its opening brace so the
+  // partial object is re-scanned once the next delta completes it.
+  if (depth === 0) {
+    nextIndex = partial.length
+  } else if (start !== -1) {
+    nextIndex = start
+  }
+
+  return { cards, nextIndex }
 }
 
 function isFlashcard(card: Card): card is Flashcard {
@@ -115,11 +152,14 @@ export default function Generate() {
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cards, setCards] = useState<Card[]>([])
+  // Tracks the mode that was active when the current cards were generated,
+  // so result labels stay correct even if the user toggles mode mid-stream.
+  const [resultMode, setResultMode] = useState<Mode>('flashcard')
 
   useEffect(() => {
     listCertifications()
       .then(setCerts)
-      .catch(() => {/* backend not up yet — cert list stays empty */})
+      .catch(() => undefined)
   }, [])
 
   const certContext =
@@ -133,21 +173,36 @@ export default function Generate() {
     setError(null)
     setCards([])
 
+    // Capture mode so a mid-stream toggle doesn't corrupt parsing.
+    const modeAtStart = mode
+    setResultMode(modeAtStart)
     let accumulated = ''
+    let parsedUpTo = 0
+
     const onDelta = (delta: string) => {
       accumulated += delta
-      if (mode === 'flashcard') {
-        setCards(parsePartialCards<Flashcard>(accumulated))
+      if (modeAtStart === 'flashcard') {
+        const { cards: newCards, nextIndex } = parsePartialCards<Flashcard>(accumulated, parsedUpTo)
+        parsedUpTo = nextIndex
+        if (newCards.length > 0) {
+          setCards(prev => [...prev, ...newCards])
+        }
       } else {
-        setCards(parsePartialCards<MCQQuestion>(accumulated))
+        const { cards: newCards, nextIndex } = parsePartialCards<MCQQuestion>(accumulated, parsedUpTo)
+        parsedUpTo = nextIndex
+        if (newCards.length > 0) {
+          setCards(prev => [...prev, ...newCards])
+        }
       }
     }
 
     try {
-      if (mode === 'flashcard') {
-        await streamFlashcards({ text, certification: certContext }, onDelta)
+      if (modeAtStart === 'flashcard') {
+        const finalCards = await streamFlashcards({ text, certification: certContext }, onDelta)
+        setCards(finalCards)
       } else {
-        await streamMCQ({ text, certification: certContext }, onDelta)
+        const finalCards = await streamMCQ({ text, certification: certContext }, onDelta)
+        setCards(finalCards)
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Generation failed')
@@ -168,7 +223,8 @@ export default function Generate() {
           <select
             value={certSlug}
             onChange={e => setCertSlug(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            disabled={generating}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {certs.map(c => (
               <option key={c.slug} value={c.slug}>{c.display_name}</option>
@@ -181,7 +237,8 @@ export default function Generate() {
               placeholder="e.g. AWS Solutions Architect Associate"
               value={customCertName}
               onChange={e => setCustomCertName(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              disabled={generating}
+              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           )}
         </div>
@@ -192,7 +249,8 @@ export default function Generate() {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              disabled={generating}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 mode === m
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white border border-gray-300 text-gray-600 hover:border-indigo-400'
@@ -211,7 +269,8 @@ export default function Generate() {
             placeholder="Paste your notes, documentation, or any study material here…"
             value={text}
             onChange={e => setText(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            disabled={generating}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
           />
         </div>
 
@@ -232,14 +291,14 @@ export default function Generate() {
         {cards.length > 0 && (
           <div className="mt-8 space-y-4">
             <p className="text-sm text-gray-500">
-              {cards.length} {mode === 'flashcard' ? 'flashcard' : 'question'}{cards.length !== 1 ? 's' : ''}
+              {cards.length} {resultMode === 'flashcard' ? 'flashcard' : 'question'}{cards.length !== 1 ? 's' : ''}
               {generating ? ' — generating…' : ''}
             </p>
             {cards.map((card, i) =>
               isFlashcard(card) ? (
                 <FlashcardView key={i} card={card} />
               ) : (
-                <MCQView key={i} card={card as MCQQuestion} />
+                <MCQView key={i} card={card} />
               )
             )}
           </div>

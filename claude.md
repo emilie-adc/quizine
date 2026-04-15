@@ -15,8 +15,8 @@ Single-user. No auth in v1.
 
 ```
 quizine/
-├── CLAUDE.md                  ← you are here
-├── DECISIONS.md               ← architecture decisions — read before changing anything
+├── claude.md                  ← you are here
+├── decisions.md               ← architecture decisions — read before changing anything
 ├── docker-compose.yml
 ├── .env.example
 ├── backend/
@@ -25,7 +25,7 @@ quizine/
 │   │   ├── core/
 │   │   │   └── config.py      ← pydantic-settings, reads .env
 │   │   ├── api/
-│   │   │   ├── generate.py    ← /generate/mcq, /generate/flashcards
+│   │   │   ├── generate.py    ← /generate/mcq
 │   │   │   ├── ingest.py
 │   │   │   ├── certifications.py  ← /certifications CRUD + seeding
 │   │   │   ├── decks.py

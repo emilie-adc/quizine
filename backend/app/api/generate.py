@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,29 +30,39 @@ class MCQRequest(BaseModel):
     deck_id: Optional[int] = None
 
 
-@router.post("/flashcards")
+@router.post("/flashcards", response_model=None)
 async def generate_flashcards(
     req: FlashcardRequest,
     db: AsyncSession = Depends(get_db),
-) -> StreamingResponse:
-    return StreamingResponse(
-        generation.stream_flashcards(
-            req.text, req.certification, req.n_cards, req.topic_tags,
-            deck_id=req.deck_id, db=db,
-        ),
-        media_type="text/event-stream",
+) -> StreamingResponse | JSONResponse:
+    if req.stream:
+        return StreamingResponse(
+            generation.stream_flashcards(
+                req.text, req.certification, req.n_cards, req.topic_tags,
+                deck_id=req.deck_id, db=db,
+            ),
+            media_type="text/event-stream",
+        )
+    cards = await generation.generate_flashcards(
+        req.text, req.certification, req.n_cards, req.topic_tags
     )
+    return JSONResponse(content=cards)
 
 
-@router.post("/mcq")
+@router.post("/mcq", response_model=None)
 async def generate_mcq(
     req: MCQRequest,
     db: AsyncSession = Depends(get_db),
-) -> StreamingResponse:
-    return StreamingResponse(
-        generation.stream_mcq(
-            req.text, req.certification, req.n_questions,
-            deck_id=req.deck_id, db=db,
-        ),
-        media_type="text/event-stream",
+) -> StreamingResponse | JSONResponse:
+    if req.stream:
+        return StreamingResponse(
+            generation.stream_mcq(
+                req.text, req.certification, req.n_questions,
+                deck_id=req.deck_id, db=db,
+            ),
+            media_type="text/event-stream",
+        )
+    questions = await generation.generate_mcq(
+        req.text, req.certification, req.n_questions
     )
+    return JSONResponse(content=questions)
