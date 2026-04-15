@@ -205,14 +205,14 @@ Work through in order. Tick and note when done. Do not skip ahead.
 
 ### Phase 2 — vertical slice (frontend)
 
-- [ ] **T07** — Scaffold frontend: `npm create vite@latest frontend -- --template react-ts`.
+- [x] **T07** — Scaffold frontend: `npm create vite@latest frontend -- --template react-ts`. ✅ 2026-04-08
       Add Tailwind. Vite proxy: `/api` → `http://localhost:8000`.
 
-- [ ] **T08** — `frontend/src/api/generate.ts` — typed SSE wrappers for both generate endpoints.
+- [x] **T08** — `frontend/src/api/generate.ts` — typed SSE wrappers for both generate endpoints. ✅ 2026-04-08
 
-- [ ] **T09** — `frontend/src/api/certifications.ts` — typed wrapper for cert list + detail.
+- [x] **T09** — `frontend/src/api/certifications.ts` — typed wrapper for cert list + detail. ✅ 2026-04-08
 
-- [ ] **T10** — Generation page (`src/pages/Generate.tsx`):
+- [x] **T10** — Generation page (`src/pages/Generate.tsx`): ✅ 2026-04-08
       cert picker (dropdown of verified certs + "custom" option with free-text fallback),
       text area, mode toggle (flashcard / MCQ), Generate button.
       Stream cards into view as SSE deltas arrive.
