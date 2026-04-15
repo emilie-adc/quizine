@@ -298,7 +298,7 @@ export default function Generate() {
               isFlashcard(card) ? (
                 <FlashcardView key={i} card={card} />
               ) : (
-                <MCQView key={i} card={card as MCQQuestion} />
+                <MCQView key={i} card={card} />
               )
             )}
           </div>
