@@ -46,36 +46,46 @@ async function readSSEStream(
   let buffer = ''
   let accumulated = ''
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
 
-    for (const line of lines) {
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const payload = line.slice('data: '.length)
+        if (payload === '[DONE]') {
+          await reader.cancel()
+          return accumulated
+        }
+        const { delta } = JSON.parse(payload) as { delta: string }
+        accumulated += delta
+        onDelta(delta)
+      }
+    }
+
+    buffer += decoder.decode()
+    const remainingLines = buffer.split('\n')
+
+    for (const line of remainingLines) {
       if (!line.startsWith('data: ')) continue
       const payload = line.slice('data: '.length)
-      if (payload === '[DONE]') return accumulated
+      if (payload === '[DONE]') {
+        await reader.cancel()
+        return accumulated
+      }
       const { delta } = JSON.parse(payload) as { delta: string }
       accumulated += delta
       onDelta(delta)
     }
+    return accumulated
+  } finally {
+    reader.releaseLock()
   }
-
-  buffer += decoder.decode()
-  const remainingLines = buffer.split('\n')
-
-  for (const line of remainingLines) {
-    if (!line.startsWith('data: ')) continue
-    const payload = line.slice('data: '.length)
-    if (payload === '[DONE]') return accumulated
-    const { delta } = JSON.parse(payload) as { delta: string }
-    accumulated += delta
-    onDelta(delta)
-  }
-  return accumulated
 }
 
 // Public API --------------------------------------------------------------
