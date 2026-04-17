@@ -3,9 +3,10 @@ from __future__ import annotations
 import functools
 import json
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, Optional
 
 from anthropic import AsyncAnthropic
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 
@@ -23,12 +24,77 @@ _FLASHCARD_SYSTEM = (
     "Output only the JSON array — no markdown fences, no explanation."
 )
 
+_MCQ_SYSTEM = (
+    "You are an expert certification exam question writer. "
+    "Generate multiple choice questions as a JSON array. "
+    "Each object must have exactly these keys: "
+    '{"question": str, "options": [str, str, str, str], "correct_index": int (0-3), "topic_tag": str}. '
+    "Output only the JSON array — no markdown fences, no explanation."
+)
+
+
+async def _persist_flashcards(
+    db: AsyncSession, deck_id: int, source_text: str, cards: list[dict]
+) -> None:
+    from app.models.cards import Card
+    from app.models.ingest import SourceChunk
+
+    chunk = SourceChunk(deck_id=deck_id, content=source_text, chunk_index=0)
+    db.add(chunk)
+    await db.flush()
+
+    for item in cards:
+        card = Card(
+            deck_id=deck_id,
+            source_chunk_id=chunk.id,
+            type="flashcard",
+            front=item.get("front"),
+            back=item.get("back"),
+            custom_topic_tag=item.get("topic_tag"),
+        )
+        db.add(card)
+
+    await db.commit()
+
+
+async def _persist_mcq(
+    db: AsyncSession, deck_id: int, source_text: str, questions: list[dict]
+) -> None:
+    from app.models.cards import Card, MCQOption
+    from app.models.ingest import SourceChunk
+
+    chunk = SourceChunk(deck_id=deck_id, content=source_text, chunk_index=0)
+    db.add(chunk)
+    await db.flush()
+
+    for item in questions:
+        card = Card(
+            deck_id=deck_id,
+            source_chunk_id=chunk.id,
+            type="mcq",
+            front=item.get("question"),
+            back=None,
+            custom_topic_tag=item.get("topic_tag"),
+        )
+        db.add(card)
+        await db.flush()
+
+        for i, option_text in enumerate(item.get("options", [])):
+            db.add(MCQOption(
+                card_id=card.id,
+                position=i,
+                text=option_text,
+                is_correct=(i == item.get("correct_index", -1)),
+            ))
+
+    await db.commit()
+
 
 def _build_flashcard_prompt(
     text: str,
-    certification: str | None,
+    certification: Optional[str],
     n_cards: int,
-    topic_tags: list[str] | None,
+    topic_tags: Optional[list[str]],
 ) -> str:
     cert_block = f"Certification context:\n{certification}\n\n" if certification else ""
     tags_block = f"Focus on these topics: {', '.join(topic_tags)}.\n" if topic_tags else ""
@@ -42,12 +108,15 @@ def _build_flashcard_prompt(
 
 async def stream_flashcards(
     text: str,
-    certification: str | None,
+    certification: Optional[str],
     n_cards: int,
-    topic_tags: list[str] | None,
+    topic_tags: Optional[list[str]],
+    deck_id: Optional[int] = None,
+    db: Optional[AsyncSession] = None,
 ) -> AsyncGenerator[str, None]:
     user_prompt = _build_flashcard_prompt(text, certification, n_cards, topic_tags)
 
+    full_text = ""
     async with _get_client().messages.stream(
         model="claude-opus-4-6",
         max_tokens=4096,
@@ -55,15 +124,24 @@ async def stream_flashcards(
         messages=[{"role": "user", "content": user_prompt}],
     ) as stream:
         async for chunk in stream.text_stream:
+            full_text += chunk
             yield f"data: {json.dumps({'delta': chunk})}\n\n"
-        yield "data: [DONE]\n\n"
+
+    if deck_id is not None and db is not None:
+        try:
+            cards = json.loads(full_text)
+            await _persist_flashcards(db, deck_id, text, cards)
+        except Exception:
+            pass  # don't fail the stream on persistence errors
+
+    yield "data: [DONE]\n\n"
 
 
 async def generate_flashcards(
     text: str,
-    certification: str | None,
+    certification: Optional[str],
     n_cards: int,
-    topic_tags: list[str] | None,
+    topic_tags: Optional[list[str]],
 ) -> list[dict[str, Any]]:
     """Return the fully generated flashcard array as a Python list (non-streaming)."""
     user_prompt = _build_flashcard_prompt(text, certification, n_cards, topic_tags)
@@ -95,16 +173,11 @@ async def generate_flashcards(
     return parsed
 
 
-_MCQ_SYSTEM = (
-    "You are an expert certification exam question writer. "
-    "Generate multiple choice questions as a JSON array. "
-    "Each object must have exactly these keys: "
-    '{"question": str, "options": [str, str, str, str], "correct_index": int (0-3), "topic_tag": str}. '
-    "Output only the JSON array — no markdown fences, no explanation."
-)
-
-
-def _build_user_prompt(text: str, certification: str | None, n_questions: int) -> str:
+def _build_mcq_prompt(
+    text: str,
+    certification: Optional[str],
+    n_questions: int,
+) -> str:
     cert_block = f"Certification context:\n{certification}\n\n" if certification else ""
     return (
         f"{cert_block}"
@@ -115,11 +188,14 @@ def _build_user_prompt(text: str, certification: str | None, n_questions: int) -
 
 async def stream_mcq(
     text: str,
-    certification: str | None,
+    certification: Optional[str],
     n_questions: int,
+    deck_id: Optional[int] = None,
+    db: Optional[AsyncSession] = None,
 ) -> AsyncGenerator[str, None]:
-    user_prompt = _build_user_prompt(text, certification, n_questions)
+    user_prompt = _build_mcq_prompt(text, certification, n_questions)
 
+    full_text = ""
     async with _get_client().messages.stream(
         model="claude-opus-4-6",
         max_tokens=4096,
@@ -127,17 +203,26 @@ async def stream_mcq(
         messages=[{"role": "user", "content": user_prompt}],
     ) as stream:
         async for chunk in stream.text_stream:
+            full_text += chunk
             yield f"data: {json.dumps({'delta': chunk})}\n\n"
-        yield "data: [DONE]\n\n"
+
+    if deck_id is not None and db is not None:
+        try:
+            questions = json.loads(full_text)
+            await _persist_mcq(db, deck_id, text, questions)
+        except Exception:
+            pass
+
+    yield "data: [DONE]\n\n"
 
 
 async def generate_mcq(
     text: str,
-    certification: str | None,
+    certification: Optional[str],
     n_questions: int,
 ) -> list[dict[str, Any]]:
     """Return the fully generated MCQ array as a Python list (non-streaming)."""
-    user_prompt = _build_user_prompt(text, certification, n_questions)
+    user_prompt = _build_mcq_prompt(text, certification, n_questions)
 
     message = await _get_client().messages.create(
         model="claude-opus-4-6",
